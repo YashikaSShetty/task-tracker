@@ -1,4 +1,4 @@
-import logo from './logo.svg';
+// import logo from './logo.svg';
 import './App.css';
 import { useState } from 'react';
 import { useEffect } from 'react';
@@ -7,7 +7,7 @@ import axios from 'axios';
 function App() {
   const [tasks,setTasks]=useState([]);
   useEffect(() => {
-    axios.get("http://localhost:5000/api/tasks")
+    axios.get("https://task-tracker-backend-lcd3.onrender.com/api/tasks")
     .then((res)=>{setTasks(res.data)})
     .catch((err)=>{console.log(err)});
   },[]);
