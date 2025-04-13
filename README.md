@@ -1,21 +1,25 @@
-# task-tracker
-A simple full-stack productivity app built with React and Node.js
-
 # Task Tracker
 
-A basic full-stack productivity app built with React and Node.js (in progress).  
-Currently part of my journey into full-stack development.
+A full-stack productivity app built with React (frontend) and Node.js + Express (backend).  
+This is part of my ongoing transition from frontend to full-stack engineering.
 
-## Features (Planned):
-- Add / edit / delete tasks
-- Mark tasks complete
-- Store tasks in backend (MongoDB or in-memory for MVP)
-- Responsive UI
+## 🚀 Live Demo
 
-## Stack:
-- Frontend: React
-- Backend: Node.js + Express
-- DB: MongoDB (or in-memory fallback)
+- 🖥️ **Frontend:** [https://rococo-frangollo-d40ae5.netlify.app](https://rococo-frangollo-d40ae5.netlify.app)  
+- 🔗 **Backend API:** [https://task-tracker-backend-lcd3.onrender.com/api/tasks](https://task-tracker-backend-lcd3.onrender.com/api/tasks)
 
-## Status:
-Initial setup underway. Backend routes and UI in progress.
+## Features
+- View tasks from live backend API
+- (Coming soon) Add / edit / delete tasks
+- Responsive UI design with React
+- Backend built with Node.js + Express
+
+## Tech Stack
+- **Frontend:** React, Axios, CSS
+- **Backend:** Node.js, Express
+- **Deployment:** Netlify (frontend) + Render (backend)
+
+## Status
+✅ Initial version deployed  
+🔧 Currently adding form (POST) and delete functionality  
+🎨 Styling and MongoDB integration in progress
