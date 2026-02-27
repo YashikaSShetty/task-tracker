@@ -57,8 +57,12 @@ app.put('/api/tasks/:id', (req, res) => {
     const { id } = req.params;
     const { title, completed } = req.body;
     
-    const taskIndex = tasks.findIndex(task => task._id === id);
+    console.log('PUT request - Looking for task with ID:', id);
+    console.log('Current tasks:', tasks.map(t => ({ _id: t._id, title: t.title })));
+    
+    const taskIndex = tasks.findIndex(task => task._id === id || task.id === id);
     if (taskIndex === -1) {
+      console.log('Task not found for ID:', id);
       return res.status(404).json({ message: 'Task not found' });
     }
     
@@ -69,8 +73,10 @@ app.put('/api/tasks/:id', (req, res) => {
       updatedAt: new Date()
     };
     
+    console.log('Task updated successfully:', tasks[taskIndex]);
     res.json(tasks[taskIndex]);
   } catch (error) {
+    console.error('Error updating task:', error);
     res.status(500).json({ message: 'Error updating task', error: error.message });
   }
 });
@@ -79,7 +85,7 @@ app.put('/api/tasks/:id', (req, res) => {
 app.delete('/api/tasks/:id', (req, res) => {
   try {
     const { id } = req.params;
-    const taskIndex = tasks.findIndex(task => task._id === id);
+    const taskIndex = tasks.findIndex(task => task._id === id || task.id === id);
     
     if (taskIndex === -1) {
       return res.status(404).json({ message: 'Task not found' });
