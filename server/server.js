@@ -1,92 +1,104 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const mongoose = require('mongoose');
 const cron = require('node-cron');
-const connectDB = require('./config/database');
-const { sendEndOfDayEmail } = require('./services/emailService');
-const Task = require('./models/Task');
+
+// Temporarily disable MongoDB for testing
+// const mongoose = require('mongoose');
+// const connectDB = require('./config/database');
+// const { sendEndOfDayEmail } = require('./services/emailService');
+// const Task = require('./models/Task');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Connect to database
-connectDB();
+// Temporarily use in-memory storage for testing
+let tasks = [
+  { _id: '1', title: "Learn Node", completed: false, createdAt: new Date(), updatedAt: new Date() },
+  { _id: '2', title: "Build Task Tracker", completed: false, createdAt: new Date(), updatedAt: new Date() }
+];
+
+// Connect to database (commented out for testing)
+// connectDB();
 
 app.use(cors());
 app.use(express.json());
 
 // GET all tasks
-app.get('/api/tasks', async (req, res) => {
-  try {
-    const tasks = await Task.find().sort({ createdAt: -1 });
-    res.json(tasks);
-  } catch (error) {
-    res.status(500).json({ message: 'Error fetching tasks', error: error.message });
-  }
+app.get('/api/tasks', (req, res) => {
+  res.json(tasks);
 });
 
 // POST create new task
-app.post('/api/tasks', async (req, res) => {
+app.post('/api/tasks', (req, res) => {
   try {
     const { title } = req.body;
     if (!title) {
       return res.status(400).json({ message: 'Title is required' });
     }
     
-    const newTask = new Task({ title });
-    const savedTask = await newTask.save();
-    res.status(201).json(savedTask);
+    const newTask = {
+      _id: Date.now().toString(),
+      title,
+      completed: false,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    tasks.unshift(newTask);
+    res.status(201).json(newTask);
   } catch (error) {
     res.status(500).json({ message: 'Error creating task', error: error.message });
   }
 });
 
 // PUT update task
-app.put('/api/tasks/:id', async (req, res) => {
+app.put('/api/tasks/:id', (req, res) => {
   try {
     const { id } = req.params;
     const { title, completed } = req.body;
     
-    const updatedTask = await Task.findByIdAndUpdate(
-      id,
-      { title, completed, updatedAt: Date.now() },
-      { new: true, runValidators: true }
-    );
-    
-    if (!updatedTask) {
+    const taskIndex = tasks.findIndex(task => task._id === id);
+    if (taskIndex === -1) {
       return res.status(404).json({ message: 'Task not found' });
     }
     
-    res.json(updatedTask);
+    tasks[taskIndex] = {
+      ...tasks[taskIndex],
+      title: title || tasks[taskIndex].title,
+      completed: completed !== undefined ? completed : tasks[taskIndex].completed,
+      updatedAt: new Date()
+    };
+    
+    res.json(tasks[taskIndex]);
   } catch (error) {
     res.status(500).json({ message: 'Error updating task', error: error.message });
   }
 });
 
 // DELETE task
-app.delete('/api/tasks/:id', async (req, res) => {
+app.delete('/api/tasks/:id', (req, res) => {
   try {
     const { id } = req.params;
-    const deletedTask = await Task.findByIdAndDelete(id);
+    const taskIndex = tasks.findIndex(task => task._id === id);
     
-    if (!deletedTask) {
+    if (taskIndex === -1) {
       return res.status(404).json({ message: 'Task not found' });
     }
     
+    tasks.splice(taskIndex, 1);
     res.status(204).send();
   } catch (error) {
     res.status(500).json({ message: 'Error deleting task', error: error.message });
   }
 });
 
-// Schedule end-of-day email at 6 PM every day
-cron.schedule('0 18 * * *', () => {
-  console.log('Running end-of-day email job...');
-  sendEndOfDayEmail();
-});
+// Schedule end-of-day email at 6 PM every day (commented out for testing)
+// cron.schedule('0 18 * * *', () => {
+//   console.log('Running end-of-day email job...');
+//   sendEndOfDayEmail();
+// });
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  console.log('End-of-day emails scheduled for 6:00 PM daily');
+  console.log('End-of-day emails disabled for testing');
 });
