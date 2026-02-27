@@ -1,47 +1,92 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const mongoose = require('mongoose');
+const cron = require('node-cron');
+const connectDB = require('./config/database');
+const { sendEndOfDayEmail } = require('./services/emailService');
+const Task = require('./models/Task');
+
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
+
+// Connect to database
+connectDB();
 
 app.use(cors());
 app.use(express.json());
 
-const tasks = [
-  { id: 1, title: "Learn Node", completed: false },
-  { id: 2, title: "Build Task Tracker", completed: false }
-];
-
-//get
-app.get('/api/tasks', (req, res) => {
-  res.json(tasks);
+// GET all tasks
+app.get('/api/tasks', async (req, res) => {
+  try {
+    const tasks = await Task.find().sort({ createdAt: -1 });
+    res.json(tasks);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching tasks', error: error.message });
+  }
 });
 
-//post added
-app.post  ('/api/tasks', (req, res) => {
-  const {title} = req.body;
-  if (!title) {
-    return res.status(400).json({ message: 'Title is required' });
+// POST create new task
+app.post('/api/tasks', async (req, res) => {
+  try {
+    const { title } = req.body;
+    if (!title) {
+      return res.status(400).json({ message: 'Title is required' });
+    }
+    
+    const newTask = new Task({ title });
+    const savedTask = await newTask.save();
+    res.status(201).json(savedTask);
+  } catch (error) {
+    res.status(500).json({ message: 'Error creating task', error: error.message });
   }
-  const newTask = {
-    id: tasks.length + 1,
-    title,
-    isCompleted: false
-  };
-  tasks.push(newTask);
-  res.status(201).json(newTask);
-})
+});
 
-//delete added
-app.delete('/api/tasks/:id', (req, res) => {
-  const id = req.params.id;
-  const taskIndex = tasks.findIndex(task => task.id === parseInt(id)); 
-  if (taskIndex === -1) {
-    return res.status(404).json({ message: 'Task not found' });
+// PUT update task
+app.put('/api/tasks/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, completed } = req.body;
+    
+    const updatedTask = await Task.findByIdAndUpdate(
+      id,
+      { title, completed, updatedAt: Date.now() },
+      { new: true, runValidators: true }
+    );
+    
+    if (!updatedTask) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+    
+    res.json(updatedTask);
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating task', error: error.message });
   }
-  tasks.splice(taskIndex, 1);
-  return res.status(204).send();  // Respond with 204 No Content to indicate successful deletion
-})
+});
+
+// DELETE task
+app.delete('/api/tasks/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deletedTask = await Task.findByIdAndDelete(id);
+    
+    if (!deletedTask) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+    
+    res.status(204).send();
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting task', error: error.message });
+  }
+});
+
+// Schedule end-of-day email at 6 PM every day
+cron.schedule('0 18 * * *', () => {
+  console.log('Running end-of-day email job...');
+  sendEndOfDayEmail();
+});
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log('End-of-day emails scheduled for 6:00 PM daily');
 });
